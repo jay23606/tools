@@ -1,9 +1,11 @@
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 from git.repo import Repo
 
 import nf_core.modules.lint
+from nf_core.modules.lint.module_tests import _check_stub_gzip_syntax
 
 from ...test_modules import TestModules
 from ...utils import GITLAB_NFTEST_BRANCH, GITLAB_URL
@@ -315,7 +317,7 @@ class TestModuleTests(TestModules):
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     echo "" | gzip > ${prefix}.txt.gz
-    echo | gzip > ${prefix}.vcf.gz
+    echo "stub" | gzip > ${prefix}.vcf.gz
     echo "" | gzip > ${prefix}.bam.gz
     touch ${prefix}.txt
     """
@@ -369,3 +371,25 @@ class TestModuleTests(TestModules):
         # reset the file
         with open(snap_file, "w") as fh:
             fh.write(content)
+
+
+def test_stub_gzip_lint_accepts_empty_echo_forms(tmp_path):
+    """Empty echo, including `echo` without an argument, is valid gzip stub syntax."""
+    main_nf = tmp_path / "main.nf"
+    main_nf.write_text(
+        '''process test {
+    stub:
+    """
+    echo | gzip > bare.gz
+    echo "" | gzip > double-quoted.gz
+    echo '' | gzip > single-quoted.gz
+    """
+}
+'''
+    )
+    module = SimpleNamespace(main_nf=main_nf, failed=[], passed=[])
+
+    _check_stub_gzip_syntax(module)
+
+    assert not module.failed
+    assert module.passed[0][1] == "test_stub_gzip_syntax"
