@@ -14,6 +14,7 @@
 
 ### Linting
 
+- Accept `echo | gzip` in stub gzip linting.
 - make pipelines linting, including ro-create also work offline ([#4585](https://github.com/nf-core/tools/pull/4585))
 - respect `skip_features` for `files_unchanged` tests ([#4596](https://github.com/nf-core/tools/pull/4596))
 
